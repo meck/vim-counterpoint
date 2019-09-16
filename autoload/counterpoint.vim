@@ -1,21 +1,3 @@
-function! s:run_formater(formater, expression)
-  if !executable(a:formater)
-    echomsg a:formater . " not found on $PATH, did you install it?"
-    return
-  endif
-
-  let l:result = system(a:formater . " " . shellescape(a:expression))
-
-  if v:shell_error || a:expression ==# ''
-    echohl WarningMsg
-    echo a:formater . " Error"
-    echohl None
-    return a:expression
-  endif
-
-  return l:result
-endfunction
-
 function! counterpoint#formatLine(formater) range
   let b:winview = winsaveview()
 
@@ -41,9 +23,9 @@ endfunction
 function! counterpoint#formatSelection(formater) range
   let l:old_reg = getreg("a")
   let l:old_reg_type = getregtype("a")
-  
+
   let @a = s:run_formater(a:formater, s:get_visual_selection())
-  
+
   " Remove any extra linebreaks added by system() if the selction ends inline
   if s:visual_selection_inline()
     let @a=substitute(strtrans(@a),'\^@','','g')
@@ -54,6 +36,24 @@ function! counterpoint#formatSelection(formater) range
 
   " Restore register a
   call setreg("a", l:old_reg, l:old_reg_type)
+endfunction
+
+function! s:run_formater(formater, expression)
+  if !executable(a:formater)
+    echomsg a:formater . " not found on $PATH, did you install it?"
+    return
+  endif
+
+  let l:result = system(a:formater . " " . shellescape(a:expression))
+
+  if v:shell_error || a:expression ==# ''
+    echohl WarningMsg
+    echo a:formater . " Error"
+    echohl None
+    return a:expression
+  endif
+
+  return l:result
 endfunction
 
 " https://stackoverflow.com/a/6271254
@@ -69,10 +69,7 @@ function! s:get_visual_selection()
     return join(lines, "\n")
 endfunction
 
-function! s:visual_selection_inline()  
+function! s:visual_selection_inline()
     let [line_end, column_end] = getpos("'>")[1:2]
     return column_end < strlen(getline(line_end))
-endfunction
-
-function! counterpoint#pointful_visual() range
 endfunction
