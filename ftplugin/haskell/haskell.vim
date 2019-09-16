@@ -3,6 +3,8 @@ if !exists('g:contrapoint_enablemappings')
 endif
 
 if g:contrapoint_enablemappings
-  noremap <silent> <leader>h. :call counterpoint#pointfree()<CR>
-  noremap <silent> <leader>h> :call counterpoint#pointful()<CR>
+  nnoremap <silent> <leader>h. :call counterpoint#formatLine('pointfree')<CR>
+  vnoremap <silent> <leader>h. :call counterpoint#formatSelection('pointfree')<CR>
+  nnoremap <silent> <leader>h> :call counterpoint#formatLine('pointful')<CR>
+  vnoremap <silent> <leader>h> :call counterpoint#formatSelection('pointful')<CR>
 endif

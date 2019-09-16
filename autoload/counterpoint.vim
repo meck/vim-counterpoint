@@ -1,14 +1,14 @@
-function! s:runPointFree(expression)
-  if !executable("pointfree")
-    echomsg "pointfree not found on $PATH, did you install it? (https://github.com/bmillwood/pointfree)"
+function! s:run_formater(formater, expression)
+  if !executable(a:formater)
+    echomsg a:formater . " not found on $PATH, did you install it?"
     return
   endif
 
-  let l:result = system("pointfree " . shellescape(a:expression))
+  let l:result = system(a:formater . " " . shellescape(a:expression))
 
-  if v:shell_error || a:expression ==# ""
+  if v:shell_error || a:expression ==# ''
     echohl WarningMsg
-    echo "Pointfree Error"
+    echo a:formater . " Error"
     echohl None
     return a:expression
   endif
@@ -16,25 +16,7 @@ function! s:runPointFree(expression)
   return l:result
 endfunction
 
-function! s:runPointFul(expression)
-  if !executable("pointful")
-    echomsg "pointful not found on $PATH, did you install it? (https://github.com/23Skidoo/pointful)"
-    return
-  endif
-
-  let l:result = system("pointful " . shellescape(a:expression))
-
-  if v:shell_error || a:expression ==# ""
-    echohl WarningMsg
-    echo "Pointful Error"
-    echohl None
-    return a:expression
-  endif
-
-  return l:result
-endfunction
-
-function! counterpoint#pointfree() range
+function! counterpoint#formatLine(formater) range
   let b:winview = winsaveview()
 
   let l:expression = join(getline(a:firstline, a:lastline), "\n")
@@ -43,7 +25,7 @@ function! counterpoint#pointfree() range
     return
   endif
 
-  let l:pfExp = split(s:runPointFree(l:expression), "\n")
+  let l:pfExp = split(s:run_formater(a:formater, l:expression), "\n")
 
   call setline(a:firstline, pfExp)
 
@@ -55,23 +37,42 @@ function! counterpoint#pointfree() range
   call winrestview(b:winview)
 endfunction
 
-function! counterpoint#pointful() range
-  let b:winview = winsaveview()
 
-  let l:expression = join(getline(a:firstline, a:lastline), "\n")
-
-  if l:expression == ""
-    return
+function! counterpoint#formatSelection(formater) range
+  let l:old_reg = getreg("a")
+  let l:old_reg_type = getregtype("a")
+  
+  let @a = s:run_formater(a:formater, s:get_visual_selection())
+  
+  " Remove any extra linebreaks added by system() if the selction ends inline
+  if s:visual_selection_inline()
+    let @a=substitute(strtrans(@a),'\^@','','g')
   endif
 
-  let l:pfExp = split(s:runPointFul(l:expression), "\n")
+  " Reselect visual, delete to "_, and paste reg a
+  execute 'normal! gv"_d"aP'
 
-  call setline(a:firstline, pfExp)
+  " Restore register a
+  call setreg("a", l:old_reg, l:old_reg_type)
+endfunction
 
-  " remove any lines left over from any concatenation of the expression
-  if (a:lastline - a:firstline + 1) - len(l:pfExp)
-   silent! execute a:firstline + len(l:pfExp) . ',' . a:lastline . 'delete _'
-  endif
+" https://stackoverflow.com/a/6271254
+function! s:get_visual_selection()
+    let [line_start, column_start] = getpos("'<")[1:2]
+    let [line_end, column_end] = getpos("'>")[1:2]
+    let lines = getline(line_start, line_end)
+    if len(lines) == 0
+        return ''
+    endif
+    let lines[-1] = lines[-1][: column_end - (&selection == 'inclusive' ? 1 : 2)]
+    let lines[0] = lines[0][column_start - 1:]
+    return join(lines, "\n")
+endfunction
 
-  call winrestview(b:winview)
+function! s:visual_selection_inline()  
+    let [line_end, column_end] = getpos("'>")[1:2]
+    return column_end < strlen(getline(line_end))
+endfunction
+
+function! counterpoint#pointful_visual() range
 endfunction
