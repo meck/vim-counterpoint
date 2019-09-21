@@ -12,5 +12,5 @@ not being able to run on a lambda function within a line using visual mode.
 - `<Leader>h.` to run pointfree
 - `<Leader>h>` to run pointful
 
-Disable default mappings with `g:contrapoint_enablemappings=0` and check `ftplugins` to make custom ones.
+Disable default mappings with `g:counterpoint_enable_mappings=0` and check `ftplugins` to make custom ones.
 
